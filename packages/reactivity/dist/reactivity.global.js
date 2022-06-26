@@ -33,8 +33,9 @@ var VueReactivity = (() => {
     effect2.deps.length = 0;
   }
   var ReactiveEffect = class {
-    constructor(fn) {
+    constructor(fn, scheduler) {
       this.fn = fn;
+      this.scheduler = scheduler;
     }
     active = true;
     deps = [];
@@ -52,10 +53,19 @@ var VueReactivity = (() => {
         this.parent = null;
       }
     }
+    stop() {
+      if (this.active) {
+        this.active = false;
+        cleanupEffect(this);
+      }
+    }
   };
-  function effect(fn) {
-    const _effect = new ReactiveEffect(fn);
+  function effect(fn, options = {}) {
+    const _effect = new ReactiveEffect(fn, options.scheduler);
     _effect.run();
+    const runner = _effect.run.bind(_effect);
+    runner.effect = _effect;
+    return runner;
   }
   var targetMap = /* @__PURE__ */ new WeakMap();
   function track(target, type, key) {
@@ -81,8 +91,12 @@ var VueReactivity = (() => {
     if (effects) {
       effects = new Set(effects);
       effects.forEach((effect2) => {
-        if (effect2 !== activeEffect)
-          effect2.run();
+        if (effect2 !== activeEffect) {
+          if (effect2.scheduler)
+            effect2.scheduler();
+          else
+            effect2.run();
+        }
       });
     }
   }
@@ -98,7 +112,10 @@ var VueReactivity = (() => {
       if (key === "__v_isReactive" /* IS_REACTIVE */)
         return true;
       track(target, "get", key);
-      return Reflect.get(target, key, receiver);
+      const res = Reflect.get(target, key, receiver);
+      if (isObject(res))
+        return reactive(res);
+      return res;
     },
     set(target, key, value, receiver) {
       const oldValue = target[key];

@@ -13,7 +13,7 @@ class ReactiveEffect {
   public active = true
   public deps = []
   public parent = null
-  constructor(public fn) {
+  constructor(public fn, public scheduler) {
 
   }
 
@@ -37,12 +37,22 @@ class ReactiveEffect {
       this.parent = null
     }
   }
+
+  stop() {
+    if (this.active) {
+      this.active = false
+      cleanupEffect(this)
+    }
+  }
 }
 
-export function effect(fn) {
+export function effect(fn, options: any = {}) {
   // fn根据状态变化重新执行
-  const _effect = new ReactiveEffect(fn)
+  const _effect = new ReactiveEffect(fn, options.scheduler)
   _effect.run()
+  const runner = _effect.run.bind(_effect)
+  runner.effect = _effect
+  return runner
 }
 
 // effect可以嵌套effect 流程类似树形结构 给effect加一个parent属性
@@ -81,8 +91,12 @@ export function trigger(target, type, key, newValue, oldValue) {
     effects = new Set(effects)
     effects.forEach((effect) => {
       // 在执行effect的时候，又要执行自己，需要屏蔽掉，不能无限调用
-      if (effect !== activeEffect)
-        effect.run()
+      if (effect !== activeEffect) {
+        if (effect.scheduler)
+          effect.scheduler()
+        else
+          effect.run()
+      }
     })
   }
 }

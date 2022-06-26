@@ -18,10 +18,15 @@
     } }
     const a = reactive(data)
     console.log(a)
-    effect(() => {
-      document.querySelector("#app").innerHTML = a.name
-      document.querySelector("#app").innerHTML = a.age
+    const runner = effect(() => {
+      console.log(a.name)
+      console.log(a.address)
+    },{
+      scheduler(){
+        console.log(111)
+      }
     })
+    a.name = 'djp2'
 
   </script>
 </body>
