@@ -1,4 +1,12 @@
 export let activeEffect
+
+function cleanupEffect(effect) {
+  const { deps } = effect
+  for (let i = 0; i < deps.length; i++)
+    deps[i].delete(effect)
+  effect.deps.length = 0
+}
+
 class ReactiveEffect {
   // effect有可能失效，需要激活标识
   // 这个effect默认激活
@@ -18,6 +26,10 @@ class ReactiveEffect {
     try {
       this.parent = activeEffect
       activeEffect = this
+
+      // 需要在执行函数之前，将之前收集的内容清空
+      cleanupEffect(this)
+
       return this.fn()
     }
     finally {
@@ -33,7 +45,7 @@ export function effect(fn) {
   _effect.run()
 }
 
-// 1. effect可以嵌套effect 流程类似树形结构 给effect加一个parent属性
+// effect可以嵌套effect 流程类似树形结构 给effect加一个parent属性
 
 // 对象 => 某个属性 => 多个effect
 // {对象:{key:[]}} Weakmap来实现，effect数组用Set 去重
@@ -62,10 +74,16 @@ export function trigger(target, type, key, newValue, oldValue) {
   // 触发的值不在targetMap中
   if (!depsMap)
     return
-  const effects = depsMap.get(key)
-  effects && effects.forEach((effect) => {
-    // 在执行effect的时候，又要执行自己，需要屏蔽掉，不能无限调用
-    if (effect !== activeEffect)
-      effect.run()
-  })
+  let effects = depsMap.get(key)
+
+  // 在执行之前 先拷贝一份来执行 不要关联饮用
+  if (effects) {
+    effects = new Set(effects)
+    effects.forEach((effect) => {
+      // 在执行effect的时候，又要执行自己，需要屏蔽掉，不能无限调用
+      if (effect !== activeEffect)
+        effect.run()
+    })
+  }
 }
+
