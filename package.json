@@ -1,0 +1,21 @@
+{
+  "name": "vue3-realize",
+  "description": "从零实现Vue3",
+  "scripts": {
+    "dev": "node scripts/dev.js reactivity -f global"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "vue3-realize"
+  ],
+  "author": "kitiho",
+  "license": "MIT",
+  "devDependencies": {
+    "@antfu/eslint-config": "^0.25.2",
+    "esbuild": "^0.14.47",
+    "eslint": "^8.18.0",
+    "minimist": "^1.2.6",
+    "typescript": "^4.7.4"
+  }
+}

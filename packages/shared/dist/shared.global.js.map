@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts"],
+  "sourcesContent": ["export function isObject(value) {\n  return value !== null && typeof value === 'object'\n}\n"],
+  "mappings": ";;AAAO,oBAAkB,OAAO;AAC9B,WAAO,UAAU,QAAQ,OAAO,UAAU;AAAA,EAC5C;",
+  "names": []
+}
