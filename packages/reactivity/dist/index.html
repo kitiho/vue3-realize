@@ -9,23 +9,28 @@
 </head>
 
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <button id="btn">change</button>
+  </div>
   <script src="./reactivity.global.js"></script>
   <script>
-    const { reactive, effect } = VueReactivity
-    const data = { name: 'djp', age: 16, address: {
-      city:'chongqing'
-    } }
-    const a = reactive(data)
-    const runner = effect(() => {
-      console.log(a.name)
-      console.log(a.address)
-    },{
-      scheduler(){
-        console.log(111)
-      }
+    
+    const { reactive, effect, computed } = VueReactivity
+    const person = reactive({
+      name: 'djp',
+      age: 16,
+      familyName: 'duan',
+      firstName: 'jipeng'
     })
-    a.name = 'djp2'
+    const a = computed(() => {
+      return person.familyName + person.firstName
+    })
+    effect(()=>{
+      console.log(person.firstName,a.value)
+    })
+    document.querySelector('#btn').addEventListener('click', () => {
+      person.firstName = 'jipeng2'
+    })
 
   </script>
 </body>

@@ -14,7 +14,7 @@ function cleanupEffect(effect) {
   effect.deps.length = 0
 }
 
-class ReactiveEffect {
+export class ReactiveEffect {
   // effect有可能失效，需要激活标识
   // 这个effect默认激活
   public active = true
@@ -113,15 +113,20 @@ export function track(target, type, key) {
   if (!dep)
     depsMap.set(key, (dep = new Set()))
 
-  // 找到key对应的effect们，判断一下当前的effect是不是在其中
-  const shouldTrack = !dep.has(activeEffect)
+  trackEffects(dep)
+}
+export function trackEffects(dep) {
+  if (activeEffect) {
+    // 找到key对应的effect们，判断一下当前的effect是不是在其中
+    const shouldTrack = !dep.has(activeEffect)
 
-  // 如果还不在其中，就需要把当前的effect加入到deps中
-  if (shouldTrack) {
-    dep.add(activeEffect)
+    // 如果还不在其中，就需要把当前的effect加入到deps中
+    if (shouldTrack) {
+      dep.add(activeEffect)
 
-    // 不只是key对应的effects要记录，同时当前的effect对象要需要记录key对应的effects，双向记录，方便后续清理
-    activeEffect.deps.push(dep)
+      // 不只是key对应的effects要记录，同时当前的effect对象要需要记录key对应的effects，双向记录，方便后续清理
+      activeEffect.deps.push(dep)
+    }
   }
 }
 
@@ -135,8 +140,11 @@ export function trigger(target, type, key, newValue, oldValue) {
     return
 
   // 在key们中找key对应的effect们
-  let effects = depsMap.get(key)
+  const effects = depsMap.get(key)
+  triggerEffects(effects)
+}
 
+export function triggerEffects(effects) {
   if (effects) {
     // 先新建一份effects
     effects = new Set(effects)

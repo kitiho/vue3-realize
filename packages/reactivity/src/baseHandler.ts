@@ -27,17 +27,15 @@ export const mutableHandlers = {
   },
 
   set(target, key, value, receiver) {
-    // 通过Reflect拿proxy对应的值
-    const result = Reflect.set(target, key, value, receiver)
-
     // 拿到原来的值和新的值做比较
     const oldValue = target[key]
+    // 通过Reflect拿proxy对应的值
+    const result = Reflect.set(target, key, value, receiver)
 
     // 值变化了，就要更新
     if (oldValue !== value)
       // 值发生变化，需要触发值对应的effect
       trigger(target, 'set', key, value, oldValue)
-
     // 返回值
     return result
   },
