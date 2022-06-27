@@ -17,7 +17,6 @@
       city:'chongqing'
     } }
     const a = reactive(data)
-    console.log(a)
     const runner = effect(() => {
       console.log(a.name)
       console.log(a.address)

@@ -5,20 +5,23 @@ const reactiveMap = new WeakMap()
 
 // 将数据转换成响应式数据
 export function reactive(target) {
+  // 判断是不是对象，如果不是对象，直接返回
   if (!isObject(target))
     return
 
+  // 如果已经被代理过了
   const existingProxy = reactiveMap.get(target)
   if (existingProxy)
     return existingProxy
 
-  // #3
+  // 如果就是一个proxy
   if (target[ReactiveFlags.IS_REACTIVE])
     return target
 
-  // 创建Proxy
+  // 创建一个新的proxy
   const proxy = new Proxy(target, mutableHandlers)
 
+  // 将proxy和target关联起来 保存到reactiveMap中
   reactiveMap.set(target, proxy)
 
   return proxy
