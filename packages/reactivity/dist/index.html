@@ -15,22 +15,14 @@
   <script src="./reactivity.global.js"></script>
   <script>
 
-    const { reactive, effect, computed, watch } = VueReactivity
-    const person = reactive({
-      name: 'djp',
-      age: 16,
-      familyName: 'duan',
-      firstName: 'jipeng'
+    const { reactive, effect, computed, watch, ref, toRefs } = VueReactivity
+    const state = reactive({ name: 'djp' })
+    let { name } = toRefs(state)
+    effect(() => {
+      console.log(name.value)
     })
-    document.querySelector('#btn').addEventListener('click', () => {
-      person.name = Math.random() * 10
-    })
-
-    watch(() => person, (newVal, oldVal, onCleanup) => {
-      onCleanup(() => {
-        console.log('cleanup')
-      })
-      console.log(newVal, oldVal)
+    btn.addEventListener('click', () => {
+      name.value = 'djp2'
     })
 
   </script>
