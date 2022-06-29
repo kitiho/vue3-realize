@@ -60,8 +60,12 @@ var VueRuntimeDom = (() => {
     }
   };
 
+  // packages/runtime-dom/src/patchProp.ts
+  function patchProp(el, key, prevValue, nextValue) {
+  }
+
   // packages/runtime-dom/src/index.ts
-  var renderOptions = assign(nodeOps, { patchProp: void 0 });
+  var renderOptions = assign(nodeOps, { patchProp });
   return __toCommonJS(src_exports);
 })();
 //# sourceMappingURL=runtime-dom.global.js.map
