@@ -60,8 +60,63 @@ var VueRuntimeDom = (() => {
     }
   };
 
+  // packages/runtime-dom/src/modules/attr.ts
+  function patchAttr() {
+  }
+
+  // packages/runtime-dom/src/modules/class.ts
+  function patchClass(el, nextValue) {
+    if (nextValue === null)
+      el.removeAttribute("class");
+    else
+      el.className = nextValue;
+  }
+
+  // packages/runtime-dom/src/modules/event.ts
+  function patchEvent(el, eventName, nextValue) {
+    const invokers = el._vei || (el._vei = {});
+    const exists = invokers[eventName];
+    if (exists) {
+      exists.value = nextValue;
+    } else {
+      const event = eventName.slice(2).toLowerCase();
+      if (nextValue) {
+        const invoker = invokers[eventName] = createInvoker(nextValue);
+        el.addEventListener(event, invoker);
+      } else if (exists) {
+        el.removeEventListener(event, exists);
+        invokers[eventName] = void 0;
+      }
+    }
+  }
+  function createInvoker(callback) {
+    const invoker = (e) => invoker.value(e);
+    invoker.value = callback;
+    return invoker;
+  }
+
+  // packages/runtime-dom/src/modules/style.ts
+  function patchStyle(el, prevValue, nextValue) {
+    for (const key in nextValue)
+      el.style[key] = nextValue[key];
+    if (prevValue) {
+      for (const key in prevValue) {
+        if (nextValue[key] === null)
+          el.style[key] = null;
+      }
+    }
+  }
+
   // packages/runtime-dom/src/patchProp.ts
   function patchProp(el, key, prevValue, nextValue) {
+    if (key === "class")
+      patchClass(el, nextValue);
+    else if (key === "style")
+      patchStyle(el, prevValue, nextValue);
+    else if (/^on[^a-z]/.test(key))
+      patchEvent(el, key, nextValue);
+    else
+      patchAttr(el, key, prevValue, nextValue);
   }
 
   // packages/runtime-dom/src/index.ts
