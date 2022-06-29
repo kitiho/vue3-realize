@@ -2,7 +2,7 @@
   "name": "vue3-realize",
   "description": "从零实现Vue3",
   "scripts": {
-    "dev": "node scripts/dev.js reactivity -f global"
+    "dev": "node scripts/dev.js runtime-dom -f global"
   },
   "keywords": [
     "vue",
