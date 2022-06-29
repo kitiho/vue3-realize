@@ -22,6 +22,7 @@ var VueReactivity = (() => {
   __export(src_exports, {
     computed: () => computed,
     effect: () => effect,
+    proxyRefs: () => proxyRefs,
     reactive: () => reactive,
     ref: () => ref,
     toRef: () => toRef,
@@ -258,11 +259,11 @@ var VueReactivity = (() => {
     _value;
     __v_isRef = true;
     dep = /* @__PURE__ */ new Set();
-    get() {
+    get value() {
       trackEffects(this.dep);
       return this._value;
     }
-    set(newValue) {
+    set value(newValue) {
       if (newValue !== this.rawValue) {
         triggerEffects(this.dep);
         this._value = toReactive(newValue);
@@ -290,6 +291,23 @@ var VueReactivity = (() => {
     for (const key in object)
       result[key] = toRef(object, key);
     return result;
+  }
+  function proxyRefs(object) {
+    return new Proxy(object, {
+      get(target, key, receiver) {
+        const r = Reflect.get(target, key, receiver);
+        return r.__v_isRef ? r.value : r;
+      },
+      set(target, key, value, receiver) {
+        const oldValue = target[key];
+        if (oldValue.__v_isRef) {
+          oldValue.value = value;
+          return true;
+        } else {
+          return Reflect.set(target, key, value, receiver);
+        }
+      }
+    });
   }
   return __toCommonJS(src_exports);
 })();

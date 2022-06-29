@@ -15,15 +15,18 @@
   <script src="./reactivity.global.js"></script>
   <script>
 
-    const { reactive, effect, computed, watch, ref, toRefs } = VueReactivity
+    const { reactive, effect, computed, watch, ref, toRefs, proxyRefs } = VueReactivity
     const state = reactive({ name: 'djp' })
     let { name } = toRefs(state)
+    let flag = ref(false)
     effect(() => {
       console.log(name.value)
     })
     btn.addEventListener('click', () => {
       name.value = 'djp2'
     })
+    const ctx = proxyRefs({ flag })
+    console.log(ctx.flag)
 
   </script>
 </body>
