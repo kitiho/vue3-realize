@@ -20,12 +20,136 @@ var VueRuntimeDom = (() => {
   // packages/runtime-dom/src/index.ts
   var src_exports = {};
   __export(src_exports, {
-    renderOptions: () => renderOptions
+    Text: () => Text,
+    createRenderer: () => createRenderer,
+    createVNode: () => createVNode,
+    h: () => h,
+    isVNode: () => isVNode,
+    render: () => render
   });
 
   // packages/shared/src/index.ts
+  function isObject(value) {
+    return value !== null && typeof value === "object";
+  }
   var isArray = Array.isArray;
+  var isString = (value) => typeof value === "string";
   var assign = Object.assign;
+
+  // packages/rumtime-core/src/vnode.ts
+  function isVNode(value) {
+    return !!(value && value.__v_isVNode);
+  }
+  var Text = Symbol("Text");
+  function createVNode(type, props, children = null) {
+    const shapeFlag = isString(type) ? 1 /* ELEMENT */ : 0;
+    const vnode = {
+      __v_isVNode: true,
+      shapeFlag,
+      type,
+      props,
+      children,
+      key: props?.key,
+      el: null
+    };
+    if (children) {
+      let childType = 0;
+      if (isArray(children)) {
+        childType = 16 /* ARRAY_CHILD */;
+      } else {
+        children = String(children);
+        childType = 8 /* TEXT_CHILD */;
+      }
+      vnode.shapeFlag |= childType;
+    }
+    return vnode;
+  }
+
+  // packages/rumtime-core/src/renderer.ts
+  function createRenderer(renderOptions2) {
+    const {
+      insert: hostInsert,
+      remove: hostRemove,
+      setElementText: hostSetElementText,
+      setText: hostSetText,
+      parentNode: hostParentNode,
+      nextSibling: hostNextSibling,
+      createElement: hostCreateElement,
+      createText: hostCreateText,
+      patchProp: hostPatchProp
+    } = renderOptions2;
+    function normalize(child) {
+      if (isString(child))
+        return createVNode(Text, null, child);
+      return child;
+    }
+    function mountChildren(children, container) {
+      children.forEach((child) => {
+        child = normalize(child);
+        patch(null, child, container);
+      });
+    }
+    function mountElement(vnode, container) {
+      const { type, props, children, shapeFlag } = vnode;
+      const el = vnode.el = hostCreateElement(type, props);
+      if (props) {
+        for (const key in props)
+          hostPatchProp(el, key, null, props[key]);
+      }
+      if (shapeFlag & 8 /* TEXT_CHILD */)
+        hostSetElementText(el, children);
+      else if (shapeFlag & 16 /* ARRAY_CHILD */)
+        mountChildren(children, el);
+      hostInsert(el, container);
+    }
+    function processText(n1, n2, container) {
+      if (n1 === null)
+        hostInsert(n2.el = hostCreateText(n2.children, container), container);
+    }
+    function patch(n1, n2, container) {
+      if (n1 === n2)
+        return;
+      if (n1 === null) {
+        const { type, shapeFlag } = n2;
+        switch (type) {
+          case Text:
+            processText(n1, n2, container);
+            break;
+          default:
+            if (shapeFlag & 1 /* ELEMENT */)
+              mountElement(n2, container);
+        }
+      } else {
+      }
+    }
+    const render2 = (vnode, container) => {
+      if (vnode === null) {
+      } else {
+        patch(container._vnode || null, vnode, container);
+        container._vnode = vnode;
+      }
+    };
+    return { render: render2 };
+  }
+
+  // packages/rumtime-core/src/h.ts
+  function h(type, propsChildren, children) {
+    const l = arguments.length;
+    if (l === 2) {
+      if (isObject(propsChildren) && !isArray(propsChildren)) {
+        if (isVNode(propsChildren))
+          return createVNode(type, null, [propsChildren]);
+        else
+          return createVNode(type, propsChildren);
+      } else {
+        return createVNode(type, null, propsChildren);
+      }
+    } else if (l > 3) {
+      children = Array.from(arguments).slice(2);
+    } else if (l === 3) {
+    }
+    return createVNode(type, propsChildren, children);
+  }
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {
@@ -61,7 +185,11 @@ var VueRuntimeDom = (() => {
   };
 
   // packages/runtime-dom/src/modules/attr.ts
-  function patchAttr() {
+  function patchAttr(el, key, nextValue) {
+    if (nextValue)
+      el.setAttribute(key, nextValue);
+    else
+      el.removeAttribute(key);
   }
 
   // packages/runtime-dom/src/modules/class.ts
@@ -116,11 +244,14 @@ var VueRuntimeDom = (() => {
     else if (/^on[^a-z]/.test(key))
       patchEvent(el, key, nextValue);
     else
-      patchAttr(el, key, prevValue, nextValue);
+      patchAttr(el, key, nextValue);
   }
 
   // packages/runtime-dom/src/index.ts
   var renderOptions = assign(nodeOps, { patchProp });
+  function render(vnode, container) {
+    createRenderer(renderOptions).render(vnode, container);
+  }
   return __toCommonJS(src_exports);
 })();
 //# sourceMappingURL=runtime-dom.global.js.map

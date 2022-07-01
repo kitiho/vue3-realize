@@ -14,5 +14,5 @@ export function patchProp(el, key, prevValue, nextValue) {
     patchEvent(el, key, nextValue)
 
   else
-    patchAttr(el, key, prevValue, nextValue)
+    patchAttr(el, key, nextValue)
 }
