@@ -19,7 +19,7 @@ export function h(type, propsChildren, children) {
     children = Array.from(arguments).slice(2)
   }
   else if (l === 3) {
-
+    // children = [children]
   }
   return createVNode(type, propsChildren, children)
 }

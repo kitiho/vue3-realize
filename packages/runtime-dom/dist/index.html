@@ -13,9 +13,19 @@
   <script src="./runtime-dom.global.js"></script>
   <script>
     const { h, render, Text } = VueRuntimeDom
-    // render(h(Text, 'hello'), app)
-    render(h('div', { style: { color: 'red' } }, [h('span', '123'), 'hello']), app)
-    render(null, app)
+    render(h('h1', { style: { color: 'red' } }, [
+      h('li', { key: 'a' }, 'a'),
+      h('li', { key: 'b' }, 'b'),
+      h('li', { key: 'c' }, 'c'),
+    ]), app)
+    setTimeout(() => {
+      render(h('h1', { style: { color: 'blue' } }, [
+        h('li', { key: 'd' }, 'd'),
+        h('li', { key: 'e' }, 'e'),
+        h('li', { key: 'b' }, 'b'),
+        h('li', { key: 'c' }, 'c'),
+      ]), app)
+    }, 2000);
   </script>
 </body>
 

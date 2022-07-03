@@ -3,6 +3,9 @@ export function isVNode(value) {
   return !!(value && value.__v_isVNode)
 }
 export const Text = Symbol('Text')
+export function isSameVNode(n1, n2) {
+  return n1.type === n2.type && n1.key === n2.key
+}
 export function createVNode(type, props, children = null) {
   const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
   const vnode = {
