@@ -145,6 +145,7 @@ export function createRenderer(renderOptions) {
       patchElement(n1, n2, container)
   }
 
+  // #1 入口
   function patch(n1, n2, container) {
     // 如果前后是同一个节点 什么都不做
     if (n1 === n2)
