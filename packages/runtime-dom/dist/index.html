@@ -13,18 +13,27 @@
   <script src="./runtime-dom.global.js"></script>
   <script>
     const { h, render, Text } = VueRuntimeDom
-    render(h('h1', { style: { color: 'red' } }, [
+    render(h('h1', [
       h('li', { key: 'a' }, 'a'),
       h('li', { key: 'b' }, 'b'),
-      h('li', { key: 'c' }, 'c')
+      h('li', { key: 'c' }, 'c'),
+      h('li', { key: 'd' }, 'd'),
+      h('li', { key: 'gg' }, 'gg'),
+      h('li', { key: 'e' }, 'e'),
+      h('li', { key: 'f' }, 'f'),
+      h('li', { key: 'g' }, 'g'),
     ]), app)
     setTimeout(() => {
-      render(h('h1', { style: { color: 'blue' } }, [
-        h('li', { key: 'd' }, 'd'),
-        h('li', { key: 'e' }, 'e'),
-        h('li', { key: 'b' }, 'b'),
-        h('li', { key: 'c' }, 'c'),
-      ]), app)
+      render(h('h1', [
+      h('li', { key: 'a' }, 'a'),
+      h('li', { key: 'b' }, 'b'),
+      h('li', { key: 'e' }, 'e'),
+      h('li', { key: 'c' }, 'c'),
+      h('li', { key: 'd' }, 'd'),
+      h('li', { key: 'h' }, 'h'),
+      h('li', { key: 'f' }, 'f'),
+      h('li', { key: 'g' }, 'g'),
+    ]), app)
     }, 2000);
   </script>
 </body>

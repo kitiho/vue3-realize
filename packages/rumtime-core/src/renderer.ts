@@ -31,7 +31,7 @@ export function createRenderer(renderOptions) {
       patch(null, child, container)
     })
   }
-  function mountElement(vnode, container) {
+  function mountElement(vnode, container, anchor) {
     const { type, props, children, shapeFlag } = vnode
     const el = vnode.el = hostCreateElement(type, props)
     if (props) {
@@ -43,7 +43,7 @@ export function createRenderer(renderOptions) {
     else if (shapeFlag & ShapeFlags.ARRAY_CHILD)
       mountChildren(children, el)
 
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   function processText(n1, n2, container) {
@@ -63,7 +63,7 @@ export function createRenderer(renderOptions) {
 
     for (const key in oldProps) {
       if (!(key in newProps))
-        hostPatchProp(el, key, oldProps[key], null)
+        hostPatchProp(el, key, oldProps[key], undefined)
     }
   }
   function unmountChildren(children) {
@@ -97,7 +97,58 @@ export function createRenderer(renderOptions) {
       e2--
     }
 
+    // common sequence * mount
+    if (i > e1) {
+      if (i <= e2) {
+        while (i <= e2) {
+          const nextPos = e2 + 1
+          const anchor = nextPos < c2.length ? c2[nextPos].el : null
+          patch(null, c2[i], el, anchor)
+          i++
+        }
+      }
+    }
+    else if (i > e2) {
+      if (i <= e1) {
+        while (i <= e1) {
+          unmount(c1[i])
+          i++
+        }
+      }
+    }
     console.log(i, e1, e2)
+
+    const s1 = i
+    const s2 = i
+    const keyToNewIndexMap = new Map()
+    // 新的总个数
+    const toBePatched = e2 - s2 + 1
+    const newIndexToOldIndexMap = new Array(toBePatched).fill(0)
+    for (let i = s2; i <= e2; i++)
+      keyToNewIndexMap.set(c2[i].key, i)
+    for (let i = s1; i <= e1; i++) {
+      const oldChild = c1[i]
+      const newIndex = keyToNewIndexMap.get(oldChild.key)
+      if (!newIndex) {
+        unmount(oldChild)
+      }
+      else {
+        // 用来标记当前所patch过的结果 新的位置对应的老的位置 如果数组里放的值大于0，说明已经patch过了
+        newIndexToOldIndexMap[newIndex - s2] = i + 1
+        patch(oldChild, c2[newIndex], el)
+      }
+    }
+    console.log(newIndexToOldIndexMap)
+    for (let i = toBePatched - 1; i >= 0; i--) {
+      const index = i + s2
+      const current = c2[index]
+      const anchor = index + 1 < c2.length ? c2[index + 1].el : null
+      if (newIndexToOldIndexMap[i] === 0)
+        patch(null, current, el, anchor)
+      else
+        hostInsert(current.el, el, anchor)
+    }
+    console.log(keyToNewIndexMap)
   }
   function patchChildren(n1, n2, el) {
     const c1 = n1 && n1.children
@@ -130,23 +181,23 @@ export function createRenderer(renderOptions) {
       }
     }
   }
-  function patchElement(n1, n2, container) {
+  function patchElement(n1, n2) {
     const el = n2.el = n1.el
     const oldProps = n1.props || {}
     const newProps = n2.props || {}
     patchProps(oldProps, newProps, el)
     patchChildren(n1, n2, el)
   }
-  function processElement(n1, n2, container) {
+  function processElement(n1, n2, container, anchor) {
     if (n1 === null)
-      mountElement(n2, container)
+      mountElement(n2, container, anchor)
 
     else
-      patchElement(n1, n2, container)
+      patchElement(n1, n2)
   }
 
   // #1 入口
-  function patch(n1, n2, container) {
+  function patch(n1, n2, container, anchor = null) {
     // 如果前后是同一个节点 什么都不做
     if (n1 === n2)
       return
@@ -165,7 +216,7 @@ export function createRenderer(renderOptions) {
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT)
-          processElement(n1, n2, container)
+          processElement(n1, n2, container, anchor)
     }
   }
 

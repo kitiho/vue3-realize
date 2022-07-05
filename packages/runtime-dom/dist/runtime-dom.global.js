@@ -95,7 +95,7 @@ var VueRuntimeDom = (() => {
         patch(null, child, container);
       });
     }
-    function mountElement(vnode, container) {
+    function mountElement(vnode, container, anchor) {
       const { type, props, children, shapeFlag } = vnode;
       const el = vnode.el = hostCreateElement(type, props);
       if (props) {
@@ -106,7 +106,7 @@ var VueRuntimeDom = (() => {
         hostSetElementText(el, children);
       else if (shapeFlag & 16 /* ARRAY_CHILD */)
         mountChildren(children, el);
-      hostInsert(el, container);
+      hostInsert(el, container, anchor);
     }
     function processText(n1, n2, container) {
       if (n1 === null) {
@@ -122,7 +122,7 @@ var VueRuntimeDom = (() => {
         hostPatchProp(el, key, oldProps[key], newProps[key]);
       for (const key in oldProps) {
         if (!(key in newProps))
-          hostPatchProp(el, key, oldProps[key], null);
+          hostPatchProp(el, key, oldProps[key], void 0);
       }
     }
     function unmountChildren(children) {
@@ -151,7 +151,52 @@ var VueRuntimeDom = (() => {
         e1--;
         e2--;
       }
+      if (i > e1) {
+        if (i <= e2) {
+          while (i <= e2) {
+            const nextPos = e2 + 1;
+            const anchor = nextPos < c2.length ? c2[nextPos].el : null;
+            patch(null, c2[i], el, anchor);
+            i++;
+          }
+        }
+      } else if (i > e2) {
+        if (i <= e1) {
+          while (i <= e1) {
+            unmount(c1[i]);
+            i++;
+          }
+        }
+      }
       console.log(i, e1, e2);
+      const s1 = i;
+      const s2 = i;
+      const keyToNewIndexMap = /* @__PURE__ */ new Map();
+      const toBePatched = e2 - s2 + 1;
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+      for (let i2 = s2; i2 <= e2; i2++)
+        keyToNewIndexMap.set(c2[i2].key, i2);
+      for (let i2 = s1; i2 <= e1; i2++) {
+        const oldChild = c1[i2];
+        const newIndex = keyToNewIndexMap.get(oldChild.key);
+        if (!newIndex) {
+          unmount(oldChild);
+        } else {
+          newIndexToOldIndexMap[newIndex - s2] = i2 + 1;
+          patch(oldChild, c2[newIndex], el);
+        }
+      }
+      console.log(newIndexToOldIndexMap);
+      for (let i2 = toBePatched - 1; i2 >= 0; i2--) {
+        const index = i2 + s2;
+        const current = c2[index];
+        const anchor = index + 1 < c2.length ? c2[index + 1].el : null;
+        if (newIndexToOldIndexMap[i2] === 0)
+          patch(null, current, el, anchor);
+        else
+          hostInsert(current.el, el, anchor);
+      }
+      console.log(keyToNewIndexMap);
     }
     function patchChildren(n1, n2, el) {
       const c1 = n1 && n1.children;
@@ -178,20 +223,20 @@ var VueRuntimeDom = (() => {
         }
       }
     }
-    function patchElement(n1, n2, container) {
+    function patchElement(n1, n2) {
       const el = n2.el = n1.el;
       const oldProps = n1.props || {};
       const newProps = n2.props || {};
       patchProps(oldProps, newProps, el);
       patchChildren(n1, n2, el);
     }
-    function processElement(n1, n2, container) {
+    function processElement(n1, n2, container, anchor) {
       if (n1 === null)
-        mountElement(n2, container);
+        mountElement(n2, container, anchor);
       else
-        patchElement(n1, n2, container);
+        patchElement(n1, n2);
     }
-    function patch(n1, n2, container) {
+    function patch(n1, n2, container, anchor = null) {
       if (n1 === n2)
         return;
       if (n1 && !isSameVNode(n1, n2)) {
@@ -205,7 +250,7 @@ var VueRuntimeDom = (() => {
           break;
         default:
           if (shapeFlag & 1 /* ELEMENT */)
-            processElement(n1, n2, container);
+            processElement(n1, n2, container, anchor);
       }
     }
     function unmount(vnode) {
@@ -315,13 +360,13 @@ var VueRuntimeDom = (() => {
   }
 
   // packages/runtime-dom/src/modules/style.ts
-  function patchStyle(el, prevValue, nextValue) {
+  function patchStyle(el, prevValue, nextValue = {}) {
     for (const key in nextValue)
       el.style[key] = nextValue[key];
     if (prevValue) {
       for (const key in prevValue) {
-        if (nextValue[key] === null)
-          el.style[key] = null;
+        if (!nextValue[key])
+          el.style[key] = "";
       }
     }
   }
